@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import Clock from './components/Clock';
-import Weather from './components/Weather';
+import TimeWeatherCard from './components/TimeWeatherCard';
 import ThemeToggle from './components/ThemeToggle';
 import LanguageToggle from './components/LanguageToggle';
 
@@ -18,9 +17,11 @@ function App() {
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
   }, [isDark]);
@@ -33,26 +34,30 @@ function App() {
   const toggleLanguage = () => setLanguage(language === 'es' ? 'en' : 'es');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
-      {/* Header with toggles */}
-      <div className="fixed top-6 right-6 flex gap-4 z-10">
-        <LanguageToggle language={language} onToggle={toggleLanguage} />
+    <div className="min-h-screen transition-colors duration-300">
+      {/* Theme Toggle - Fixed at top-left */}
+      <div className="fixed top-6 left-6 z-50">
         <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
       </div>
 
-      {/* Main content */}
-      <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-screen">
-        <div className="mb-16">
-          <Clock language={language} />
-        </div>
+      {/* Language Toggle - Fixed at top-right */}
+      <div className="fixed top-6 right-6 z-50">
+        <LanguageToggle language={language} onToggle={toggleLanguage} />
+      </div>
 
-        <div className="w-full max-w-2xl">
-          <Weather language={language} />
-        </div>
+      {/* Main content */}
+      <div className="container mx-auto px-4 py-20 md:py-24 flex flex-col items-center justify-center min-h-screen gap-8 md:gap-12">
+        {/* Title */}
+        <h1 className="text-5xl md:text-6xl font-semibold text-center text-black dark:text-white">
+          Whatime
+        </h1>
+
+        {/* Combined Card */}
+        <TimeWeatherCard language={language} />
 
         {/* Footer */}
-        <footer className="mt-16 text-center text-gray-500 dark:text-gray-400 text-sm">
-          <p>Whatime - {new Date().getFullYear()}</p>
+        <footer className="mt-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+          <p>MisterFulanito 2025</p>
         </footer>
       </div>
     </div>
