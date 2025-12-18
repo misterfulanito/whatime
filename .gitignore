@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Tooling / local artifacts
+.vitest-localstorage.json*
+.claude/

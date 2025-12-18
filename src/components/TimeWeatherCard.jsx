@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Cloud, CloudRain, CloudSnow, Sun, CloudDrizzle, CloudLightning, Wind, Droplets } from 'lucide-react';
 import { getWeatherByCoords, getCurrentLocation } from '../services/weatherAPI';
 import { getTranslation } from '../i18n/translations';
 import LocationIcon from './icons/LocationIcon';
 import CalendarIcon from './icons/CalendarIcon';
 
-const TimeWeatherCard = ({ language }) => {
+const TimeWeatherCard = memo(({ language }) => {
   const [time, setTime] = useState(new Date());
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,13 +18,7 @@ const TimeWeatherCard = ({ language }) => {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    fetchWeather();
-    const interval = setInterval(fetchWeather, 30 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchWeather = async () => {
+  const fetchWeather = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -36,9 +30,15 @@ const TimeWeatherCard = ({ language }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getWeatherIcon = (condition) => {
+  useEffect(() => {
+    fetchWeather();
+    const interval = setInterval(fetchWeather, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchWeather]);
+
+  const getWeatherIcon = useCallback((condition) => {
     const iconProps = { size: 32, strokeWidth: 2 };
 
     switch (condition) {
@@ -57,26 +57,29 @@ const TimeWeatherCard = ({ language }) => {
       default:
         return <Cloud {...iconProps} className="text-black dark:text-white" />;
     }
-  };
+  }, []);
 
-  const formatDate = (date) => {
+  const formattedDate = useMemo(() => {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const months = [
       'january', 'february', 'march', 'april', 'may', 'june',
       'july', 'august', 'september', 'october', 'november', 'december'
     ];
 
-    const dayName = getTranslation(language, days[date.getDay()]);
-    const monthName = getTranslation(language, months[date.getMonth()]);
-    const day = date.getDate();
-    const year = date.getFullYear();
+    const dayName = getTranslation(language, days[time.getDay()]);
+    const monthName = getTranslation(language, months[time.getMonth()]);
+    const day = time.getDate();
+    const year = time.getFullYear();
 
     return `${dayName}, ${day} ${monthName} ${year}`;
-  };
+  }, [time, language]);
 
   if (loading) {
     return (
-      <div style={{ width: '371px' }} className="bg-white dark:bg-gray-800 p-12 card-shadow dark:card-shadow-dark" style={{ borderRadius: '12px', width: '371px' }}>
+      <div
+        className="bg-white dark:bg-gray-800 p-12 card-shadow dark:card-shadow-dark"
+        style={{ borderRadius: '12px', width: '371px' }}
+      >
         <div className="text-center py-8">
           <div className="animate-pulse text-xl text-gray-600 dark:text-gray-300">
             {getTranslation(language, 'loading')}
@@ -90,10 +93,11 @@ const TimeWeatherCard = ({ language }) => {
     return (
       <div style={{ borderRadius: '12px', width: '371px' }} className="bg-white dark:bg-gray-800 p-12 card-shadow dark:card-shadow-dark">
         <div className="text-center py-8">
-          <div className="text-red-500 mb-4">{getTranslation(language, 'error')}</div>
+          <div className="text-red-500 mb-4" role="alert">{getTranslation(language, 'error')}</div>
           <button
             onClick={fetchWeather}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label={getTranslation(language, 'retry')}
           >
             {getTranslation(language, 'retry')}
           </button>
@@ -130,7 +134,6 @@ const TimeWeatherCard = ({ language }) => {
 
   return (
     <div
-      style={cardStyle}
       className="dark:bg-gray-800 transition-all duration-300"
       style={document.documentElement.classList.contains('dark') ? cardStyleDark : cardStyle}
     >
@@ -159,7 +162,7 @@ const TimeWeatherCard = ({ language }) => {
       <div style={rowStyle}>
         <CalendarIcon size={32} color="currentColor" className="text-black dark:text-white flex-shrink-0" />
         <div className="text-black dark:text-white text-base font-normal">
-          {formatDate(time)}
+          {formattedDate}
         </div>
       </div>
 
@@ -167,9 +170,6 @@ const TimeWeatherCard = ({ language }) => {
       <div style={rowStyle}>
         <Wind size={32} strokeWidth={2} className="text-black dark:text-white flex-shrink-0" />
         <div className="flex flex-col">
-          <div className="text-black dark:text-white text-base font-normal">
-            {weather.humidity}%
-          </div>
           <div className="text-black dark:text-white text-base font-normal">
             {getTranslation(language, 'windSpeed')}
           </div>
@@ -193,6 +193,8 @@ const TimeWeatherCard = ({ language }) => {
       </div>
     </div>
   );
-};
+});
+
+TimeWeatherCard.displayName = 'TimeWeatherCard';
 
 export default TimeWeatherCard;
